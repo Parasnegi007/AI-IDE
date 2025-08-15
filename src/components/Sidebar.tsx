@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, ChevronDown, File, Folder, Plus, Search } from 'lucide-react';
+import { ChevronRight, ChevronDown, File, Folder, Plus, Search, Upload, FolderOpen, Download, RefreshCw, Settings } from 'lucide-react';
 import { FileTree } from '../types';
 
 interface SidebarProps {
@@ -110,6 +110,54 @@ const FileItem: React.FC<FileItemProps> = ({
 
 const Sidebar: React.FC<SidebarProps> = ({ fileTree, activeFile, onFileSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const folderInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          // Here you would typically update your file tree and contents
+          console.log(`Uploaded ${file.name}:`, content);
+          // You could call a prop function to update the parent component
+        };
+        reader.readAsText(file);
+      });
+    }
+  };
+
+  const handleFolderUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      console.log('Folder uploaded with', files.length, 'files');
+      // Process folder structure
+      Array.from(files).forEach(file => {
+        console.log('File path:', file.webkitRelativePath || file.name);
+      });
+    }
+  };
+
+  const downloadProject = () => {
+    // Create a simple project download
+    const projectData = {
+      name: 'AI-IDE-Project',
+      files: fileTree,
+      timestamp: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'project-structure.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -117,8 +165,36 @@ const Sidebar: React.FC<SidebarProps> = ({ fileTree, activeFile, onFileSelect })
       <div className="p-3 border-b border-gray-700">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-200">EXPLORER</h3>
-          <button className="p-1 hover:bg-gray-700 rounded transition-colors">
-            <Plus className="w-4 h-4 text-gray-400" />
+          <div className="flex items-center space-x-1">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1 hover:bg-gray-700 rounded transition-colors"
+              title="Upload Files"
+            >
+              <Upload className="w-4 h-4 text-gray-400" />
+            </button>
+            <button 
+              onClick={() => folderInputRef.current?.click()}
+              className="p-1 hover:bg-gray-700 rounded transition-colors"
+              title="Upload Folder"
+            >
+              <FolderOpen className="w-4 h-4 text-gray-400" />
+            </button>
+            <button 
+              onClick={downloadProject}
+              className="p-1 hover:bg-gray-700 rounded transition-colors"
+              title="Download Project"
+            >
+              <Download className="w-4 h-4 text-gray-400" />
+            </button>
+            <button className="p-1 hover:bg-gray-700 rounded transition-colors">
+              <Plus className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="mb-3 text-xs text-gray-400">
+          <span>💻 Local File System Access</span>
           </button>
         </div>
         
@@ -133,6 +209,24 @@ const Sidebar: React.FC<SidebarProps> = ({ fileTree, activeFile, onFileSelect })
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        
+        {/* Hidden file inputs */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".js,.jsx,.ts,.tsx,.py,.html,.css,.json,.md,.txt,.yml,.yaml,.xml"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        <input
+          ref={folderInputRef}
+          type="file"
+          multiple
+          webkitdirectory=""
+          onChange={handleFolderUpload}
+          className="hidden"
+        />
       </div>
       
       {/* File Tree */}
@@ -152,8 +246,12 @@ const Sidebar: React.FC<SidebarProps> = ({ fileTree, activeFile, onFileSelect })
       
       {/* Footer */}
       <div className="p-3 border-t border-gray-700">
-        <div className="text-xs text-gray-400">
-          Ready to code with AI
+        <div className="text-xs text-gray-400 space-y-1">
+          <div className="flex items-center justify-between">
+            <span>🚀 AI-Powered IDE</span>
+            <Settings className="w-3 h-3 cursor-pointer hover:text-gray-300" />
+          </div>
+          <div>Ready for local development</div>
         </div>
       </div>
     </div>

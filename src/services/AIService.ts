@@ -289,7 +289,12 @@ class AIService {
   }
 
   async generateCode(prompt: string, language: string, context?: string): Promise<AIResponse> {
-    // Simulate advanced AI code generation
+    // Enhanced AI response generation for general queries
+    if (!this.isCodeGenerationRequest(prompt)) {
+      return this.generateConversationalResponse(prompt, language, context);
+    }
+    
+    // Code generation for specific requests
     const codeTemplates = this.getCodeTemplates(language, prompt);
     const bestTemplate = this.selectBestTemplate(codeTemplates, prompt);
     
@@ -299,6 +304,66 @@ class AIService {
       reasoning: this.generateReasoning(prompt, bestTemplate),
       codeBlocks: bestTemplate.codeBlocks,
       suggestions: this.generateFollowUpSuggestions(prompt, language)
+    };
+  }
+
+  private isCodeGenerationRequest(prompt: string): boolean {
+    const codeKeywords = [
+      'create', 'generate', 'write', 'build', 'make',
+      'function', 'component', 'class', 'method',
+      'algorithm', 'script', 'code for'
+    ];
+    return codeKeywords.some(keyword => prompt.toLowerCase().includes(keyword));
+  }
+
+  private generateConversationalResponse(prompt: string, language: string, context?: string): AIResponse {
+    const lowerPrompt = prompt.toLowerCase();
+    
+    // Greeting responses
+    if (lowerPrompt.includes('hello') || lowerPrompt.includes('hi')) {
+      return {
+        content: "Hello! 👋 I'm Claude, your AI coding companion. I'm here to help with programming questions, code review, debugging, learning new technologies, or just having a conversation about development. What can I help you with today?",
+        confidence: 0.95,
+        reasoning: 'Friendly greeting response'
+      };
+    }
+    
+    // Help requests
+    if (lowerPrompt.includes('help') || lowerPrompt.includes('what can you do')) {
+      return {
+        content: `I'm here to help! Here's what I can do for you:
+
+🔧 **Coding Assistance**
+• Debug and fix code issues
+• Optimize performance and code quality  
+• Generate functions, components, and scripts
+• Code reviews and best practices
+
+💡 **Learning Support**
+• Explain programming concepts
+• Recommend learning resources
+• Help with project planning
+• Career guidance and interview prep
+
+💬 **General Conversation**
+• Discuss technology trends
+• Architecture and design decisions
+• Tool and framework recommendations
+• Problem-solving strategies
+
+Just ask me anything! I'm designed to be helpful, harmless, and honest in all our interactions.`,
+        confidence: 0.9,
+        reasoning: 'Comprehensive help response'
+      };
+    }
+    
+    // Default conversational response
+    return {
+      content: `That's an interesting question! I'm Claude, an AI assistant designed to help with programming and development tasks. I can assist with coding, debugging, learning new technologies, project planning, and general programming discussions.
+
+Is there something specific you'd like help with? I'm here to make your development experience better!`,
+      confidence: 0.8,
+      reasoning: 'General conversational response'
     };
   }
 
